@@ -12,7 +12,7 @@ class ProductService
 {
     public function buyProducts(array $data): bool
     {
-        DB::transaction(function () use ($data) {
+        return DB::transaction(function () use ($data) {
             $batch = Batch::create([
                 'provider_id' => $data['provider_id'],
                 'purchase_date' => now(),
@@ -24,18 +24,19 @@ class ProductService
                     'quantity' => $productData['quantity'],
                     'unit_price' => $productData['unit_price']
                 ]);
-                Storage::find($data['storage_id'])->products()->attach($productData['product_id'], [
-                    'quantity' => $productData['quantity']
+
+                Storage::find($data['storage_id'])->increment('quantity', $productData['quantity'], [
+                    'product_id' => $productData['product_id']
                 ]);
             }
-        });
 
-        return true;
+            return true;
+        });
     }
 
     public function refundBatch(array $data): bool
     {
-        DB::transaction(function () use ($data) {
+        return DB::transaction(function () use ($data) {
             $batch = Batch::findOrFail($data['batch_id']);
 
             foreach ($data['products'] as $productData) {
@@ -46,14 +47,13 @@ class ProductService
                     'quantity' => $batchProduct->pivot->quantity - $refundQuantity
                 ]);
 
-                $storageProduct = Storage::find($data['storage_id'])->products()->where('product_id', $productData['product_id'])->first();
-                $storageProduct->pivot->update([
-                    'quantity' => $storageProduct->pivot->quantity - $refundQuantity
+                Storage::find($data['storage_id'])->decrement('quantity', $refundQuantity, [
+                    'product_id' => $productData['product_id']
                 ]);
             }
-        });
 
-        return true;
+            return true;
+        });
     }
 
     public function getAvailableProducts()
@@ -65,7 +65,7 @@ class ProductService
 
     public function orderProducts(array $data): bool
     {
-        DB::transaction(function () use ($data) {
+        return DB::transaction(function () use ($data) {
             $order = Order::create([
                 'client_id' => $data['client_id'],
                 'storage_id' => $data['storage_id'],
@@ -78,14 +78,13 @@ class ProductService
                     'unit_price' => $productData['unit_price']
                 ]);
 
-                $storageProduct = Storage::find($data['storage_id'])->products()->where('product_id', $productData['product_id'])->first();
-                $storageProduct->pivot->update([
-                    'quantity' => $storageProduct->pivot->quantity - $productData['quantity']
+                Storage::find($data['storage_id'])->decrement('quantity', $productData['quantity'], [
+                    'product_id' => $productData['product_id']
                 ]);
             }
-        });
 
-        return true;
+            return true;
+        });
     }
 
     public function calculateBatchProfit()

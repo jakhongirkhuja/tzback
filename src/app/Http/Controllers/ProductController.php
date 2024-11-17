@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Http\Requests\BuyProductsRequest;
 use App\Http\Requests\RefundBatchRequest;
 use App\Http\Requests\OrderProductsRequest;
@@ -20,34 +19,29 @@ class ProductController extends Controller
 
     public function buyProducts(BuyProductsRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $result = $this->productService->buyProducts($data);
-        return response()->json(['success' => $result]);
+        $this->productService->buyProducts($request->validated());
+        return response()->json(['message' => 'Products purchased successfully']);
     }
 
     public function refundBatch(RefundBatchRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $result = $this->productService->refundBatch($data);
-        return response()->json(['success' => $result]);
+        $this->productService->refundBatch($request->validated());
+        return response()->json(['message' => 'Batch refunded successfully']);
     }
 
     public function getAvailableProducts(): JsonResponse
     {
-        $products = $this->productService->getAvailableProducts();
-        return response()->json($products);
+        return response()->json($this->productService->getAvailableProducts());
     }
 
     public function orderProducts(OrderProductsRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $result = $this->productService->orderProducts($data);
-        return response()->json(['success' => $result]);
+        $this->productService->orderProducts($request->validated());
+        return response()->json(['message' => 'Products ordered successfully']);
     }
 
     public function calculateBatchProfit(): JsonResponse
     {
-        $profits = $this->productService->calculateBatchProfit();
-        return response()->json($profits);
+        return response()->json($this->productService->calculateBatchProfit());
     }
 }
